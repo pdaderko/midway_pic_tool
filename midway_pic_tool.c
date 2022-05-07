@@ -4,7 +4,7 @@
 //Tool to read and (optionally) modify serial number and/or date from PIC16F57 dump used in many Atari/Midway games
 //by Pat Daderko (DogP) based on MAME midway_serial_pic_device::generate_serial_data from midwayic.cpp by Aaron Giles
 //
-//Usage: midway_pic_tool <filename> [new SN (0-999999999)] [new MM (1-12)] [new DD (1-31)] [new YYYY (1980-2155)]
+//Usage: midway_pic_tool <filename> [new SN (0-999999999)] [new MM (1-12)] [new DD (0-30)] [new YYYY (1980-2155)]
 //Enter '-' to leave parameter unchanged
 
 #include <stdio.h>
@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
   //print usage?
   if ((argc<2) || (argc>6))
   {
-    printf("Usage: %s <filename> [new SN (0-999999999)] [new MM (1-12)] [new DD (1-31)] [new YYYY (1980-2155)]\nEnter '-' to leave parameter unchanged\nNOTE: Entering new values modifies original file\n", argv[0]);
+    printf("Usage: %s <filename> [new SN (0-999999999)] [new MM (1-12)] [new DD (0-30)] [new YYYY (1980-2155)]\nEnter '-' to leave parameter unchanged\nNOTE: Entering new values modifies original file\n", argv[0]);
     return 1;
   }
   
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
   year=(temp/0x174)+1980;
   temp-=((year-1980)*0x174);
   month=(temp/0x1f)+1;
-  day=temp-((month-1)*0x1f)+1;
+  day=temp-((month-1)*0x1f); //day appears to be 0-30, not 1-31 (as displayed by Rush games at least)
   
   printf("Original date: %02d/%02d/%04d\n",month,day,year);
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
       modfile=1;
     }
     else
-      printf("Warning: Invalid S/N entered");
+      printf("Warning: Invalid S/N entered\n");
   }
 
 
@@ -138,18 +138,18 @@ int main(int argc, char *argv[])
       modfile=1;
     }
     else
-      printf("Warning: Invalid month entered");
+      printf("Warning: Invalid month entered\n");
   }
   if ((argc>4) && (strcmp(argv[4],"-")))
   {
     temp=atoi(argv[4]);
-    if ((temp>=1) && (temp<=31))
+    if ((temp>=0) && (temp<=30))
     {
       day=temp;
       modfile=1;
     }
     else
-      printf("Warning: Invalid day entered");
+      printf("Warning: Invalid day entered\n");
   }
   if ((argc>5) && (strcmp(argv[5],"-")))
   {
@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
       modfile=1;
     }
     else
-      printf("Warning: Invalid year entered");
+      printf("Warning: Invalid year entered\n");
   }
 
 
@@ -192,7 +192,7 @@ int main(int argc, char *argv[])
     pic_data[1] = (temp >> 8) & 0xff;
     pic_data[2] = (temp >> 16) & 0xff;
     
-    temp = 0x174 * (year - 1980) + 0x1f * (month - 1) + (day-1);
+    temp = 0x174 * (year - 1980) + 0x1f * (month - 1) + day;
     pic_data[10] = (temp >> 8) & 0xff;
     pic_data[11] = temp & 0xff;
     
